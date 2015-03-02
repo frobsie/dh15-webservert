@@ -18,13 +18,13 @@ const int SocketServer::MSG_TYPE_2 = 2;
 SocketServer::SocketServer() {
     serverSocket = 0;
     clientSocket = 0;
-}
+};
 
 SocketServer::~SocketServer() {
     if (serverSocket >= 0) {
         close(serverSocket);
     }
-}
+};
 
 void SocketServer::setupSocket() {
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -43,7 +43,7 @@ void SocketServer::setupSocket() {
 
     printMessage(MSG_TYPE_1, MSG_SERVER_STARTED);
     printMessage(MSG_TYPE_1, (MSG_SERVER_LISTENING + std::to_string(DEFAULT_SERVER_PORT)));
-}
+};
 
 struct sockaddr_in SocketServer::fillSocketAddress(unsigned short port) {
     sockaddr_in address;
@@ -57,7 +57,7 @@ struct sockaddr_in SocketServer::fillSocketAddress(unsigned short port) {
     address.sin_port = htons(port);
 
     return address;
-}
+};
 
 void SocketServer::start() {
 
@@ -74,14 +74,14 @@ void SocketServer::start() {
         setupSocket();
 
         // Start de server loop
-        while(true) {
-            // TODO
-            // - socket naar nieuwe thread pompen
-            clientSocket = accept(serverSocket, (struct sockaddr *) &cli_addr, &clilen);
-
+        while( (clientSocket = accept(serverSocket, (struct sockaddr *) &cli_addr, &clilen)) ) {
+            
             if (clientSocket < 0) {
                 std::__throw_runtime_error(ERROR_SOCKET_UNABLETOACCEPTCLIENT);
             }
+            
+            SocketServerThread sst;
+            std::thread t(&SocketServerThread::run, &sst, clientSocket);
 
             printMessage(1, string_format(
                 MSG_CLIENT_CONNECTED, 
@@ -89,14 +89,13 @@ void SocketServer::start() {
                 ntohs(cli_addr.sin_port)
             ));
 
-            // send test
-            send(clientSocket, "VERBONDEN\n", 9, 0);
+            t.join();
         }
 
     } catch(std::exception& e) {
         
     }
-}
+};
 
 void SocketServer::printMessage(int type, std::string message) {
     switch (type) {
@@ -109,4 +108,4 @@ void SocketServer::printMessage(int type, std::string message) {
     }
 
     std::cout << message << std::endl;
-}
+};

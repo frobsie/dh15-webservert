@@ -2,6 +2,7 @@
 #define SOCKETSERVER_H_
 
 #include <iostream>
+#include <thread>
 #include <unistd.h>
 #include <exception>
 #include <stdio.h>
@@ -13,6 +14,8 @@
 #include <arpa/inet.h>
 #include <string>
 
+#include "SocketServerThread.h"
+
 class SocketServer {
 public:
     /**
@@ -22,9 +25,7 @@ public:
 
     /**
      * Destructor
-     * Zorgt voor wat cleanup omtrent
-     * de Winsock lib en sluit daarna
-     * de socket.
+     * Zorgt voor wat cleanup
      */
     virtual ~SocketServer();
 
