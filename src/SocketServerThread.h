@@ -3,9 +3,12 @@
 
 #include <netinet/in.h>
 #include <iostream>
+#include <string.h>
 
 class SocketServerThread {
 public:
+    static const char* MSG_GREETINGS;
+    static const char* MSG_REPEAT;
 
     SocketServerThread();
     virtual ~SocketServerThread();
