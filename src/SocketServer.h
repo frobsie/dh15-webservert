@@ -12,7 +12,6 @@
 #include <netinet/in.h>
 #include <stdlib.h> 
 #include <arpa/inet.h>
-#include <string>
 
 #include "SocketServerThread.h"
 

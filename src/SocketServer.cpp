@@ -89,7 +89,7 @@ void SocketServer::start() {
                 ntohs(cli_addr.sin_port)
             ));
 
-            t.join();
+           t.detach();
         }
 
     } catch(std::exception& e) {
