@@ -32,11 +32,11 @@ void SocketServerThread::run(int clientSocket) {
 
     if(read_size == 0)
     {
-        puts("Client disconnected");
+        //puts("Client disconnected");
         fflush(stdout);
     }
     else if(read_size == -1)
     {
         perror("recv failed");
     }
-}
+};

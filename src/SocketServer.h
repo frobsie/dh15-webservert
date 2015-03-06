@@ -13,6 +13,9 @@
 #include <stdlib.h> 
 #include <arpa/inet.h>
 
+#include "Util.h"
+#include "Logger.h"
+#include "Config.h"
 #include "SocketServerThread.h"
 
 class SocketServer {
@@ -35,23 +38,33 @@ public:
     void start();
 
 private:
-    static const char* ERROR_SOCKET_UNABLETOCREATE;
-    static const char* ERROR_SOCKET_UNABLETOBIND;
-    static const char* ERROR_SOCKET_UNABLETOACCEPTCLIENT;
-    static const char* MSG_SERVER_STARTED;
-    static const char* MSG_SERVER_LISTENING;
-    static const char* MSG_CLIENT_CONNECTED;
-    static const char* MSG_SERVER_PREFIX;
-    static const char* MSG_CLIENT_PREFIX;
+    static const std::string ERROR_SOCKET_UNABLETOCREATE;
+    static const std::string ERROR_SOCKET_UNABLETOBIND;
+    static const std::string ERROR_SOCKET_UNABLETOACCEPTCLIENT;
+    static const std::string MSG_SERVER_STARTED;
+    static const std::string MSG_SERVER_STOPPED;
+    static const std::string MSG_SERVER_LISTENING;
+    static const std::string MSG_CLIENT_CONNECTED;
+    static const std::string MSG_SERVER_PREFIX;
+    static const std::string MSG_CLIENT_PREFIX;
+
+    static const std::string CONFIG_KEY_PORT;
+    static const std::string CONFIG_KEY_MAXCONNECTIONS;
 
     static const int DEFAULT_SERVER_PORT;
     static const int DEFAULT_MAX_CONNECTIONS;
 
-    static const int MSG_TYPE_1; // std:out message
-    static const int MSG_TYPE_2; // log message
-
+    /** Server socket file descriptor */
     int serverSocket;
+
+    /** Client socket file descriptor */
     int clientSocket;
+
+    /** Instantie van de logger */
+    Logger log;
+
+    /** Instantie van config object */
+    Config config;
 
     /**
      * Maakt een socket aan op het domein "internet" (AF_INET)
@@ -78,24 +91,6 @@ private:
      * @param message
      */
     void printMessage(int type, std::string message);
-
-    /**
-     * Template functie die (via de C++11 libraries)
-     * een datatype om kan zetten naar een formatted string.
-     * Zie : http://stackoverflow.com/a/26310318
-     * 
-     * @param  fmt
-     * @param  args
-     * @return std::string
-     */
-    template<typename... Args> std::string string_format(const char* fmt, Args... args) {
-        size_t size = snprintf(nullptr, 0, fmt, args...);
-        std::string buf;
-        buf.reserve(size + 1);
-        buf.resize(size);
-        snprintf(&buf[0], size + 1, fmt, args...);
-        return buf;
-    }
 };
 
 #endif 

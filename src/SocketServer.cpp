@@ -1,48 +1,57 @@
 #include "SocketServer.h"
 
-const char* SocketServer::ERROR_SOCKET_UNABLETOCREATE = "Socket kon niet aangemaakt worden.";
-const char* SocketServer::ERROR_SOCKET_UNABLETOBIND = "Socket kon niet aan een poort worden gebind.";
-const char* SocketServer::ERROR_SOCKET_UNABLETOACCEPTCLIENT = "Client kon niet connecten.";
-const char* SocketServer::MSG_SERVER_PREFIX = "[SERVER]";
-const char* SocketServer::MSG_CLIENT_PREFIX = "[CLIENT]";
-const char* SocketServer::MSG_SERVER_STARTED = "Server started.";
-const char* SocketServer::MSG_SERVER_LISTENING = "Listening on port: ";
-const char* SocketServer::MSG_CLIENT_CONNECTED = "Client connected from %s on port %d.";
+const string SocketServer::ERROR_SOCKET_UNABLETOCREATE = "Socket kon niet aangemaakt worden.";
+const string SocketServer::ERROR_SOCKET_UNABLETOBIND = "Socket kon niet aan een poort worden gebind.";
+const string SocketServer::ERROR_SOCKET_UNABLETOACCEPTCLIENT = "Client kon niet connecten.";
+const string SocketServer::MSG_SERVER_STARTED = "Server started.";
+const string SocketServer::MSG_SERVER_STOPPED = "Server stopped.";
+const string SocketServer::MSG_SERVER_LISTENING = "Listening on port: ";
+const string SocketServer::MSG_CLIENT_CONNECTED = "Client connected from %s on port %d.";
+const string SocketServer::CONFIG_KEY_PORT = "webport";
+const string SocketServer::CONFIG_KEY_MAXCONNECTIONS = "maxconnections";
 
-const int SocketServer::DEFAULT_SERVER_PORT = 2000;
-const int SocketServer::DEFAULT_MAX_CONNECTIONS = 10;
-
-const int SocketServer::MSG_TYPE_1 = 1;
-const int SocketServer::MSG_TYPE_2 = 2;
+using namespace std;
 
 SocketServer::SocketServer() {
+    /** Config inladen */
+    config.load();
+
+    // File descriptors resetten
     serverSocket = 0;
     clientSocket = 0;
 };
 
 SocketServer::~SocketServer() {
+    // Alleen serversocket sluiten als deze
+    // aanwezig is
     if (serverSocket >= 0) {
         close(serverSocket);
     }
+
+    // Entry aan log toevoegen
+    log.append(Logger::LOG_TYPE_SERVER, string(MSG_SERVER_STOPPED));
 };
 
 void SocketServer::setupSocket() {
+    int port = Util::atoi(config.get(CONFIG_KEY_PORT));
+    int maxConnections = Util::atoi(config.get(CONFIG_KEY_MAXCONNECTIONS));
+
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     if (serverSocket < 0) {
-        std::__throw_runtime_error(ERROR_SOCKET_UNABLETOCREATE);
+        throw std::runtime_error(string(ERROR_SOCKET_UNABLETOCREATE));
     }
 
-    sockaddr_in socketAddress = fillSocketAddress(DEFAULT_SERVER_PORT);
+    sockaddr_in socketAddress = fillSocketAddress(port);
 
     // Socket koppelen aan netwerkadres
     bind(serverSocket, (sockaddr *)&socketAddress, sizeof(sockaddr_in));
 
     // Queue voorbereiden op een maximum aantal connections
-    listen(serverSocket, DEFAULT_MAX_CONNECTIONS);
+    listen(serverSocket, maxConnections);
 
-    printMessage(MSG_TYPE_1, MSG_SERVER_STARTED);
-    printMessage(MSG_TYPE_1, (MSG_SERVER_LISTENING + std::to_string(DEFAULT_SERVER_PORT)));
+    log.append(Logger::LOG_TYPE_SERVER, string(MSG_SERVER_STARTED) );
+    log.append(Logger::LOG_TYPE_SERVER, (string(MSG_SERVER_LISTENING) + to_string(port)) );
 };
 
 struct sockaddr_in SocketServer::fillSocketAddress(unsigned short port) {
@@ -65,9 +74,8 @@ void SocketServer::start() {
     // van de client op te slaan
     struct sockaddr_in cli_addr;
 
-    // Grootte van de socket
+    // Grootte van de socket bepalen
     socklen_t clilen;
-
     clilen = sizeof(cli_addr);
 
     try {
@@ -77,35 +85,22 @@ void SocketServer::start() {
         while( (clientSocket = accept(serverSocket, (struct sockaddr *) &cli_addr, &clilen)) ) {
             
             if (clientSocket < 0) {
-                std::__throw_runtime_error(ERROR_SOCKET_UNABLETOACCEPTCLIENT);
+                throw std::runtime_error(string(ERROR_SOCKET_UNABLETOACCEPTCLIENT));
             }
-            
-            SocketServerThread sst;
-            std::thread t(&SocketServerThread::run, &sst, clientSocket);
 
-            printMessage(1, string_format(
-                MSG_CLIENT_CONNECTED, 
-                inet_ntoa(cli_addr.sin_addr), 
+            log.append(Logger::LOG_TYPE_ACCESS, Util::string_format(
+                MSG_CLIENT_CONNECTED.c_str(),
+                inet_ntoa(cli_addr.sin_addr),
                 ntohs(cli_addr.sin_port)
             ));
+            
+            SocketServerThread sst;
+            thread t(&SocketServerThread::run, &sst, clientSocket);
 
-           t.detach();
+            t.detach();
         }
 
-    } catch(std::exception& e) {
-        
+    } catch(exception& e) {
+        // TODO
     }
-};
-
-void SocketServer::printMessage(int type, std::string message) {
-    switch (type) {
-        case MSG_TYPE_1:
-            message = MSG_SERVER_PREFIX + message;
-            break;
-        case MSG_TYPE_2:
-            message = MSG_CLIENT_PREFIX + message;
-            break;
-    }
-
-    std::cout << message << std::endl;
 };
