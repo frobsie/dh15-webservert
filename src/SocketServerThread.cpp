@@ -1,42 +1,30 @@
 #include "SocketServerThread.h"
 
-const char* SocketServerThread::MSG_GREETINGS = "Greetings! I am your connection handler\n";
-const char* SocketServerThread::MSG_REPEAT = "Now type something and i shall repeat what you type \n";
+const int SocketServerThread::BUFSIZE = 64;
 
 SocketServerThread::SocketServerThread() {
+    
+};
 
-}
+int SocketServerThread::run(int socketDescriptor) {
+    // TODO
+    // - Dit zou richting de Socket class moeten
+    char buffer[BUFSIZE];
+    ssize_t bytes_read = 0;
 
-SocketServerThread::~SocketServerThread() {
+    printf("Socket descriptor: %d\n", socketDescriptor);
+    
+    bytes_read = recv(socketDescriptor, buffer, BUFSIZE - 1, 0);
 
-}
-
-void SocketServerThread::run(int clientSocket) {
-    //Get the socket descriptor
-    int read_size;
-    char client_message[2000];
-
-    send(clientSocket, "VERBONDEN\n", 9, 0);
-
-    //Send some messages to the client
-    send(clientSocket , SocketServerThread::MSG_GREETINGS , strlen(SocketServerThread::MSG_GREETINGS), 0);
-
-    send(clientSocket , SocketServerThread::MSG_REPEAT , strlen(SocketServerThread::MSG_REPEAT), 0);
-
-    //Receive a message from client
-    while( (read_size = recv(clientSocket , client_message , 2000 , 0)) > 0 )
-    {
-        //Send the message back to client
-        send(clientSocket , client_message , strlen(client_message), 0);
+    while (bytes_read > 0) {
+        buffer[bytes_read] = 0;
+        printf("Buffer: %s\n", buffer); 
+        bytes_read = recv(socketDescriptor, buffer, BUFSIZE - 1, 0);
     }
 
-    if(read_size == 0)
-    {
-        //puts("Client disconnected");
-        fflush(stdout);
+    // Recv kapt ermee
+    if (bytes_read == -1) {    
+        return -1;
     }
-    else if(read_size == -1)
-    {
-        perror("recv failed");
-    }
+    return 0;
 };

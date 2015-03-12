@@ -5,16 +5,30 @@
 #include <iostream>
 #include <string.h>
 
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <thread>
+
+#include "Socket.h"
+#include "Logger.h"
+
 class SocketServerThread {
 public:
-    static const char* MSG_GREETINGS;
-    static const char* MSG_REPEAT;
+    static const int BUFSIZE;
 
     SocketServerThread();
-    virtual ~SocketServerThread();
 
-    void run(int clientSocket);
+    int run(int socket);
+
+private:
+    /** Instantie van de logger */
+    Logger log;
 };
 
-#endif 
+#endif
 /* SOCKETSERVERTHREAD_H_ */
